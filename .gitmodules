@@ -1,0 +1,3 @@
+[submodule "external/libdicey"]
+	path = external/libdicey
+	url = https://github.com/perim/libdicey.git
