@@ -13,7 +13,6 @@ void chunk::room_list_self_test() const
 	for (unsigned i = 0; i < rooms.size(); i++)
 	{
 		const room& r1 = rooms.at(i);
-		r1.self_test();
 		ROOM_ASSERT(*this, r1, r1.x2 >= r1.x1 && r1.x1 > 0 && r1.x2 < width - 1);
 		ROOM_ASSERT(*this, r1, r1.y2 >= r1.y1 && r1.y1 > 0 && r1.y2 < height - 1);
 		ROOM_ASSERT(*this, r1, r1.top == -1 || at(r1.top, r1.y1 - 1) == TILE_DOOR || at(r1.top, r1.y1 - 1) == TILE_EMPTY);
@@ -25,6 +24,7 @@ void chunk::room_list_self_test() const
 			const room& r2 = rooms.at(j);
 			ROOM_ASSERT(*this, r1, r1 != r2);
 		}
+		r1.self_test();
 	}
 }
 
@@ -235,20 +235,20 @@ bool chunk_filter_connect_exits_grand_central(chunk& c)
 	    || (c.left < minval && c.left != -1) || c.top > c.width - minval || c.bottom > c.width - minval || c.right > c.height - minval || c.left > c.height - minval) return false;
 
 	// Dig inner room
-	room r(hmid - w, vmid - h, hmid + w, vmid + h);
-	c.dig_room(r);
+	room inner(hmid - w, vmid - h, hmid + w, vmid + h);
+	c.dig_room(inner);
 
 	// Dig tunnels to center room from exits
-	if (c.top != -1) { c.vertical_corridor(c.top, 1, vmid - h - 1); r.top = c.top; } // top
-	if (c.bottom != -1) { c.vertical_corridor(c.bottom, vmid + h + 1, c.height - 2); r.bottom = c.bottom; } // bottom
-	if (c.left != -1) { c.horizontal_corridor(1, hmid - w - 1, c.left); r.left = c.left; } // left
-	if (c.right != -1) { c.horizontal_corridor(hmid + w + 1, c.width - 2, c.right); r.right = c.right; } // right
+	if (c.top != -1 && inner.y1 > 1) { c.vertical_corridor(c.top, 1, vmid - h - 1); inner.top = c.top; } // top
+	if (c.bottom != -1 && inner.y2 < c.height - 2) { c.vertical_corridor(c.bottom, vmid + h + 1, c.height - 2); inner.bottom = c.bottom; } // bottom
+	if (c.left != -1 && inner.x1 > 1) { c.horizontal_corridor(1, hmid - w - 1, c.left); inner.left = c.left; } // left
+	if (c.right != -1 && inner.x2 < c.width - 2) { c.horizontal_corridor(hmid + w + 1, c.width - 2, c.right); inner.right = c.right; } // right
 
 	// Add some variety to the center room
-	if (c.roll(0, 1)) chunk_room_in_room(c, r, c.roll(1, 3));
-	else chunk_room_corners(c, r, CHUNK_TOP_LEFT | CHUNK_TOP_RIGHT | CHUNK_BOTTOM_LEFT | CHUNK_BOTTOM_RIGHT, c.roll(9, 16));
+	if (c.roll(0, 1)) chunk_room_in_room(c, inner, c.roll(1, 3));
+	else chunk_room_corners(c, inner, CHUNK_TOP_LEFT | CHUNK_TOP_RIGHT | CHUNK_BOTTOM_LEFT | CHUNK_BOTTOM_RIGHT, c.roll(9, 16));
 
-	c.rooms.push_back(r);
+	c.rooms.push_back(inner);
 
 	return true;
 }
@@ -763,7 +763,7 @@ room& chunk_filter_boss_placement(chunk& c, int flags)
 		if (minions >= 4 || (minions > 0 && s.roll(0, 1) == 0)) { c.build(x + dist, y, ENTITY_SUPPORT); minions--; } // right
 		if (minions >= 3 || (minions > 0 && s.roll(0, 1) == 0)) { c.build(x - dist, y, ENTITY_SUPPORT); minions--; } // left
 		if (minions >= 2 || (minions > 0 && s.roll(0, 1) == 0)) { c.build(x, y + dist, ENTITY_SUPPORT); minions--; } // top
-		if (minions >= 1) { c.build(x, y - dist, ENTITY_SUPPORT); minions--; } // bottom
+		if (minions >= 1) { c.build(x, std::max(1, y - dist), ENTITY_SUPPORT); minions--; } // bottom
 		fodder -= room_exit_guards(c, rr, ENTITY_DAMAGE);
 	}
 
