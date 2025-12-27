@@ -10,6 +10,12 @@
 
 // -- Debug --
 
+struct chunk;
+struct room;
+
+void print_room(const chunk& c, int roomidx);
+void print_room(const chunk& c, const room& r);
+
 #define DICEY_STRINGIFY(x) #x
 #define DICEY_TOSTRING(x) DICEY_STRINGIFY(x)
 #ifndef NDEBUG
@@ -78,6 +84,14 @@ enum tile_type
 	ENTITY_WILD, // random wild mob
 };
 
+struct entity
+{
+	tile_type type;
+	int x;
+	int y;
+	int room_index;
+};
+
 struct chunkconfig
 {
 	chunkconfig(seed s) : state(s), orig(s) {}
@@ -114,6 +128,7 @@ struct room
 
 	int8_t isolation = 0;
 	int8_t flags = 0;
+	int16_t index = -1; // when in a chunk, remember our index
 
 	void self_test() const;
 	int size() const { return (x2 - x1 + 1) * (y2 - y1 + 1); }
@@ -121,8 +136,9 @@ struct room
 	inline int width() const { return x2 - x1; }
 	inline int height() const { return y2 - y1; }
 	inline int door_count() const { return (top != -1) + (bottom != -1) + (left != -1) + (right != -1); }
+	inline bool is_inside(int x, int y) const { return (x <= x2 && y <= y2 && x >= x1 && y >= y1); }
 
-	room(int _x1, int _y1, int _x2, int _y2, int _isolation = 0, int _flags = 0) : x1(_x1), y1(_y1), x2(_x2), y2(_y2), isolation(_isolation), flags(_flags) {}
+	room(int _x1, int _y1, int _x2, int _y2, int _isolation = 0, int _flags = 0, int _index = -1) : x1(_x1), y1(_y1), x2(_x2), y2(_y2), isolation(_isolation), flags(_flags), index(_index) {}
 };
 inline bool operator==(const room& lhs, const room& rhs){ return (lhs.x1 == rhs.x1 && lhs.y1 == rhs.y1 && lhs.x2 == rhs.x2 && lhs.y2 == rhs.y2); }
 inline bool operator!=(const room& lhs, const room& rhs){ return !(lhs == rhs); }
@@ -185,10 +201,27 @@ struct chunk
 	inline bool try_build(int x, int y, tile_type t) { if (empty(x, y)) { map[(y << bits) + x] = t; return true; } else return false; }
 	inline void dig(int x, int y) { map[(y << bits) + x] = TILE_EMPTY; for (int i = std::max(0, x - 1); i <= std::min(width - 1, x + 1); i++) for (int j = std::max(0, y - 1); j <= std::min(height - 1, y + 1); j++) if (rock(i, j)) map[(j << bits) + i] = TILE_WALL; }
 	inline int roll(int low, int high) { return config.state.roll(low, high); } // convenience function
-	inline void horizontal_corridor(int x1, int x2, int y) { for (int i = x1; i <= x2; i++) { dig(i, y); } rooms.emplace_back(x1, y, x2, y, ROOM_FLAG_CORRIDOR); }
-	inline void vertical_corridor(int x, int y1, int y2) { for (int i = y1; i <= y2; i++) { dig(x, i); } rooms.emplace_back(x, y1, x, y2, ROOM_FLAG_CORRIDOR); }
 	void beautify();
-	inline int room_index(room& r) const { int i = 0; for (const room& rr : rooms) { if (r == rr) return i; i++; } return -1; }
+
+	inline int try_entity(const room& r, int x, int y, tile_type t)
+	{
+		ROOM_ASSERT(*this, r, r.index != -1);
+		if (!r.is_inside(x, y)) return 0;
+		if (try_build(x, y, t)) { entities.push_back({t, x, y, r.index}); return 1; }
+		else return 0;
+	}
+
+	inline void horizontal_corridor(int x1, int x2, int y)
+	{
+		for (int i = x1; i <= x2; i++) { dig(i, y); }
+		rooms.emplace_back(x1, y, x2, y, 0, ROOM_FLAG_CORRIDOR, rooms.size());
+	}
+
+	inline void vertical_corridor(int x, int y1, int y2)
+	{
+		for (int i = y1; i <= y2; i++) { dig(x, i); }
+		rooms.emplace_back(x, y1, x, y2, 0, ROOM_FLAG_CORRIDOR, rooms.size());
+	}
 
 	int16_t width;
 	int16_t height;
@@ -206,6 +239,7 @@ struct chunk
 	chunkconfig config; // TBD some duplication here
 
 	std::deque<room> rooms;
+	std::vector<entity> entities;
 
 private:
 	unsigned bits; // number of bits to bitshift to move from row to row
@@ -273,8 +307,3 @@ bool chunk_filter_protect_room(chunk& c, room& r);
 
 /// Put random wild mobs in every empty room.
 bool chunk_filter_wildlife(chunk& c);
-
-// -- Debug functions --
-
-void print_room(const chunk& c, int roomidx);
-void print_room(const chunk& c, const room& r);

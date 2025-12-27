@@ -13,7 +13,7 @@
 static int p__debug_level = 0;
 static int p__gen_method = 0;
 static int width = 64;
-static int height = 32;
+static int height = 16;
 static int level_width = 4;
 static int level_height = 4;
 static int xpos = 1;
@@ -104,7 +104,7 @@ static void stress_test(chunkconfig& config, seed s)
 	room r = chunk_filter_boss_placement(c, 0);
 	chunk_filter_protect_room(c, r);
 	chunk_filter_wildlife(c);
-	print_room(c, c.room_index(r));
+	print_room(c, r.index);
 }
 
 int main(int argc, char **argv)
