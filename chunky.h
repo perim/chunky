@@ -187,7 +187,7 @@ struct chunk
 	}
 
 	/// Add a room inside another room. The space must be empty.
-	void dig_room_inside_room(const room& r, int sides = DIR_CROSS)
+	void dig_room_inside_room(room& r, int sides = DIR_CROSS)
 	{
 		for (int x = r.x1; x <= r.x2; x++) { for (int y = r.y1; y <= r.y2; y++) { CHUNK_ASSERT(*this, empty(x, y)); } }
 		for (int x = r.x1 - 1; x <= r.x2 + 1; x++) { if ((sides & DIR_UP) && empty(x, r.y1 - 1)) makewall(x, r.y1 - 1); if ((sides & DIR_DOWN) && empty(x, r.y2 + 1)) makewall(x, r.y2 + 1); }
@@ -196,6 +196,7 @@ struct chunk
 		if (r.bottom > 0) consider_door(r.bottom, r.y2 + 1);
 		if (r.left > 0) consider_door(r.x1 - 1, r.left);
 		if (r.right > 0) consider_door(r.x2 + 1, r.right);
+		add_room(r);
 	}
 
 	// Low-level functions

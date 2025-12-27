@@ -633,7 +633,6 @@ bool chunk_room_in_room(chunk& c, room& r, int space)
 	breakdown_wall_horizontally(c, r2.x1 - 1, r2.x2 + 1, r2.y2 + 1, s);
 	breakdown_wall_vertically(c, r2.x1 - 1, r2.y1 - 1, r2.y2 + 1, s);
 	breakdown_wall_vertically(c, r2.x2 + 1, r2.y1 - 1, r2.y2 + 1, s);
-	c.add_room(r2);
 	return true;
 }
 
@@ -662,7 +661,6 @@ bool chunk_room_corners(chunk& c, room& rr, int corners, int min)
 			if (side == 0) r2.right = c.roll(r2.y1, r2.y2);
 			else r2.bottom = c.roll(r2.x1, r2.x2);
 			c.dig_room_inside_room(r2, DIR_RIGHT | DIR_DOWN);
-			c.add_room(r2);
 			retval = true;
 		}
 		else { r2.x2 = midx; r2.y2 = midy; retval = chunk_room_in_room(c, r2, 1); }
@@ -677,7 +675,6 @@ bool chunk_room_corners(chunk& c, room& rr, int corners, int min)
 			if (side == 0) r2.left = c.roll(r2.y1, r2.y2);
 			else r2.bottom = c.roll(r2.x1, r2.x2);
 			c.dig_room_inside_room(r2, DIR_LEFT | DIR_DOWN);
-			c.add_room(r2);
 			retval = true;
 		}
 		else { r2.x1 = midx; r2.y2 = midy; retval = chunk_room_in_room(c, r2, 1); }
@@ -692,7 +689,6 @@ bool chunk_room_corners(chunk& c, room& rr, int corners, int min)
 			if (side == 0) r2.right = c.roll(r2.y1, r2.y2);
 			else r2.top = c.roll(r2.x1, r2.x2);
 			c.dig_room_inside_room(r2, DIR_RIGHT | DIR_UP);
-			c.add_room(r2);
 			retval = true;
 		}
 		else { r2.x2 = midx; r2.y1 = midy; retval = chunk_room_in_room(c, r2, 1); }
@@ -707,7 +703,6 @@ bool chunk_room_corners(chunk& c, room& rr, int corners, int min)
 			if (side == 0) r2.left = c.roll(r2.y1, r2.y2);
 			else r2.top = c.roll(r2.x1, r2.x2);
 			c.dig_room_inside_room(r2, DIR_LEFT | DIR_UP);
-			c.add_room(r2);
 			retval = true;
 		}
 		else { r2.x1 = midx; r2.y1 = midy; retval = chunk_room_in_room(c, r2, 1); }
