@@ -31,6 +31,7 @@ static void usage()
 	printf("-lh/--level-height H   Height of level in number of chunks (default %d)\n", level_height);
 	printf("-x/--level-x-pos X     Level X position of chunk (default %d)\n", xpos);
 	printf("-y/--level-y-pos Y     Level Y position of chunks (default %d)\n", ypos);
+	printf("-m/--method M          Initial layout [main (default), inner, grand]\n", ypos);
 	exit(-1);
 }
 
@@ -64,36 +65,26 @@ static std::string get_str(const char* in, int& remaining)
 	return in;
 }
 
-static void test_inner_loop(chunkconfig& config)
+static void stress_test(chunkconfig& config, int method)
 {
-	chunk c(config);
-	c.generate_exits();
-	bool r = chunk_filter_connect_exits_inner_loop(c);
-	if (r)
-	{
-		c.beautify();
-		c.print_chunk();
-	}
-}
-
-static void test_grand_central(chunkconfig& config)
-{
-	chunk c(config);
-	c.generate_exits();
-	bool r = chunk_filter_connect_exits_grand_central(c);
-	if (r)
-	{
-		c.beautify();
-		c.print_chunk();
-	}
-}
-
-static void stress_test(chunkconfig& config, seed s)
-{
+	seed s = config.state;
 	chunk c(config);
 	c.generate_exits();
 	c.self_test();
-	chunk_filter_connect_exits(c);
+	bool success = true;
+	switch (method)
+	{
+	case 2: success = chunk_filter_connect_exits_grand_central(c); break;
+	case 1: success = chunk_filter_connect_exits_inner_loop(c); break;
+	case 0: chunk_filter_connect_exits(c); break; // always works
+	default: assert(false); break;
+	}
+	if (!success)
+	{
+		printf("Failed generatation with given method!\n");
+		exit(-1);
+	}
+
 	const int iter = s.roll(2, 8);
 	chunk_filter_room_expand(c, iter, iter + 6);
 	c.self_test();
@@ -178,13 +169,7 @@ int main(int argc, char **argv)
 	config.chaos = s.roll(0, 4);
 	config.openness = s.roll(0, 4);
 
-	switch (method)
-	{
-	case 2: test_grand_central(config); break;
-	case 1: test_inner_loop(config); break;
-	case 0: stress_test(config, s); break;
-	default: assert(false); break;
-	}
+	stress_test(config, method);
 
 	return 0;
 }

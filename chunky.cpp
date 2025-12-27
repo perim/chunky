@@ -1,3 +1,4 @@
+
 #include "chunky.h"
 
 static bool debug = false;
@@ -761,7 +762,7 @@ room& chunk_filter_boss_placement(chunk& c, int flags)
 	room& rr = *rp;
 	seed s = c.config.state; // make sure we don't clobber our random state with the below
 	int result = c.try_entity(rr, rr.x1 + rr.width() / 2, rr.y1 + rr.height() / 2, ENTITY_BOSS);
-	assert(result); (void)result;
+	CHUNK_ASSERT(c, result != 0);
 	rr.flags |= ROOM_FLAG_FURNISHED;
 	int x;
 	int y;
