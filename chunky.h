@@ -165,6 +165,15 @@ struct chunk
 		if (config.x < config.level_width - 1 && right == -1) { make_exit_right(config.state.derive(config.x, config.y, 1).roll(3, config.height - 3)); } // Right
 	}
 
+	void add_room(room& r)
+	{
+		ROOM_ASSERT(*this, r, r.index == -1); // not already added
+		ROOM_ASSERT(*this, r, r.valid());
+		r.self_test();
+		r.index = rooms.size();
+		rooms.push_back(r);
+	}
+
 	/// Excavate a room. The space must be filled with rocks only.
 	void dig_room(const room& r)
 	{
@@ -178,7 +187,7 @@ struct chunk
 	}
 
 	/// Add a room inside another room. The space must be empty.
-	void add_room(const room& r, int sides = DIR_CROSS)
+	void dig_room_inside_room(const room& r, int sides = DIR_CROSS)
 	{
 		for (int x = r.x1; x <= r.x2; x++) { for (int y = r.y1; y <= r.y2; y++) { CHUNK_ASSERT(*this, empty(x, y)); } }
 		for (int x = r.x1 - 1; x <= r.x2 + 1; x++) { if ((sides & DIR_UP) && empty(x, r.y1 - 1)) makewall(x, r.y1 - 1); if ((sides & DIR_DOWN) && empty(x, r.y2 + 1)) makewall(x, r.y2 + 1); }

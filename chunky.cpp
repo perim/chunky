@@ -258,8 +258,7 @@ bool chunk_filter_connect_exits_grand_central(chunk& c)
 	if (c.roll(0, 1)) chunk_room_in_room(c, inner, c.roll(1, 3));
 	else chunk_room_corners(c, inner, CHUNK_TOP_LEFT | CHUNK_TOP_RIGHT | CHUNK_BOTTOM_LEFT | CHUNK_BOTTOM_RIGHT, c.roll(9, 16));
 
-	inner.index = c.rooms.size();
-	c.rooms.push_back(inner);
+	c.add_room(inner);
 
 	return true;
 }
@@ -530,9 +529,7 @@ void chunk_filter_room_expand(chunk& c, int min, int max)
 			c.dig_room(rl); // dig the room
 			rl.right = r.left;
 			chunk_room_grow_randomly(c, rl, min, max);
-			rl.self_test();
-			rl.index = c.rooms.size();
-			c.rooms.push_back(rl);
+			c.add_room(rl);
 			if (debug) print_room(c, rl);
 		}
 		ndir = c.roll(rc.y1, rc.y2);
@@ -547,9 +544,7 @@ void chunk_filter_room_expand(chunk& c, int min, int max)
 			c.dig_room(rr); // dig the room
 			rr.left = r.right;
 			chunk_room_grow_randomly(c, rr, min, max);
-			rr.self_test();
-			rr.index = c.rooms.size();
-			c.rooms.push_back(rr);
+			c.add_room(rr);
 			if (debug) print_room(c, rr);
 		}
 		ndir = c.roll(rc.x1, rc.x2);
@@ -564,9 +559,7 @@ void chunk_filter_room_expand(chunk& c, int min, int max)
 			c.dig_room(rt); // dig the room
 			rt.bottom = r.top;
 			chunk_room_grow_randomly(c, rt, min, max);
-			rt.self_test();
-			rt.index = c.rooms.size();
-			c.rooms.push_back(rt);
+			c.add_room(rt);
 			if (debug) print_room(c, rt);
 		}
 		ndir = c.roll(rc.x1, rc.x2);
@@ -581,9 +574,7 @@ void chunk_filter_room_expand(chunk& c, int min, int max)
 			c.dig_room(rb); // dig the room
 			rb.top = r.bottom;
 			chunk_room_grow_randomly(c, rb, min, max);
-			rb.self_test();
-			rb.index = c.rooms.size();
-			c.rooms.push_back(rb);
+			c.add_room(rb);
 			if (debug) print_room(c, rb);
 		}
 	}
@@ -636,15 +627,13 @@ bool chunk_room_in_room(chunk& c, room& r, int space)
 	case 3: r2.left = c.roll(r2.y1, r2.y2); break;
 	default: abort();
 	}
-	c.add_room(r2);
+	c.dig_room_inside_room(r2);
 	seed s = c.config.state; // make sure we don't clobber our random state with the below
 	breakdown_wall_horizontally(c, r2.x1 - 1, r2.x2 + 1, r2.y1 - 1, s);
 	breakdown_wall_horizontally(c, r2.x1 - 1, r2.x2 + 1, r2.y2 + 1, s);
 	breakdown_wall_vertically(c, r2.x1 - 1, r2.y1 - 1, r2.y2 + 1, s);
 	breakdown_wall_vertically(c, r2.x2 + 1, r2.y1 - 1, r2.y2 + 1, s);
-	r2.self_test();
-	r2.index = c.rooms.size();
-	c.rooms.push_back(r2);
+	c.add_room(r2);
 	return true;
 }
 
@@ -672,10 +661,8 @@ bool chunk_room_corners(chunk& c, room& rr, int corners, int min)
 			if (side == -1) side = c.roll(0, 1);
 			if (side == 0) r2.right = c.roll(r2.y1, r2.y2);
 			else r2.bottom = c.roll(r2.x1, r2.x2);
-			c.add_room(r2, DIR_RIGHT | DIR_DOWN);
-			r2.self_test();
-			r2.index = c.rooms.size();
-			c.rooms.push_back(r2);
+			c.dig_room_inside_room(r2, DIR_RIGHT | DIR_DOWN);
+			c.add_room(r2);
 			retval = true;
 		}
 		else { r2.x2 = midx; r2.y2 = midy; retval = chunk_room_in_room(c, r2, 1); }
@@ -689,10 +676,8 @@ bool chunk_room_corners(chunk& c, room& rr, int corners, int min)
 			if (side == -1) side = c.roll(0, 1);
 			if (side == 0) r2.left = c.roll(r2.y1, r2.y2);
 			else r2.bottom = c.roll(r2.x1, r2.x2);
-			c.add_room(r2, DIR_LEFT | DIR_DOWN);
-			r2.self_test();
-			r2.index = c.rooms.size();
-			c.rooms.push_back(r2);
+			c.dig_room_inside_room(r2, DIR_LEFT | DIR_DOWN);
+			c.add_room(r2);
 			retval = true;
 		}
 		else { r2.x1 = midx; r2.y2 = midy; retval = chunk_room_in_room(c, r2, 1); }
@@ -706,10 +691,8 @@ bool chunk_room_corners(chunk& c, room& rr, int corners, int min)
 			if (side == -1) side = c.roll(0, 1);
 			if (side == 0) r2.right = c.roll(r2.y1, r2.y2);
 			else r2.top = c.roll(r2.x1, r2.x2);
-			c.add_room(r2, DIR_RIGHT | DIR_UP);
-			r2.self_test();
-			r2.index = c.rooms.size();
-			c.rooms.push_back(r2);
+			c.dig_room_inside_room(r2, DIR_RIGHT | DIR_UP);
+			c.add_room(r2);
 			retval = true;
 		}
 		else { r2.x2 = midx; r2.y1 = midy; retval = chunk_room_in_room(c, r2, 1); }
@@ -723,10 +706,8 @@ bool chunk_room_corners(chunk& c, room& rr, int corners, int min)
 			if (side == -1) side = c.roll(0, 1);
 			if (side == 0) r2.left = c.roll(r2.y1, r2.y2);
 			else r2.top = c.roll(r2.x1, r2.x2);
-			c.add_room(r2, DIR_LEFT | DIR_UP);
-			r2.self_test();
-			r2.index = c.rooms.size();
-			c.rooms.push_back(r2);
+			c.dig_room_inside_room(r2, DIR_LEFT | DIR_UP);
+			c.add_room(r2);
 			retval = true;
 		}
 		else { r2.x1 = midx; r2.y1 = midy; retval = chunk_room_in_room(c, r2, 1); }
