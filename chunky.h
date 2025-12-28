@@ -189,7 +189,7 @@ struct chunk
 	/// Add a room inside another room. The space must be empty.
 	void dig_room_inside_room(room& r, int sides = DIR_CROSS)
 	{
-		for (int x = r.x1; x <= r.x2; x++) { for (int y = r.y1; y <= r.y2; y++) { CHUNK_ASSERT(*this, empty(x, y)); } }
+		for (int x = r.x1; x <= r.x2; x++) { for (int y = r.y1; y <= r.y2; y++) { ROOM_ASSERT(*this, r, empty(x, y)); } }
 		for (int x = r.x1 - 1; x <= r.x2 + 1; x++) { if ((sides & DIR_UP) && empty(x, r.y1 - 1)) makewall(x, r.y1 - 1); if ((sides & DIR_DOWN) && empty(x, r.y2 + 1)) makewall(x, r.y2 + 1); }
 		for (int y = r.y1 - 1; y <= r.y2 + 1; y++) { if ((sides & DIR_LEFT) && empty(r.x1 - 1, y)) makewall(r.x1 - 1, y); if ((sides & DIR_RIGHT) && empty(r.x2 + 1, y)) makewall(r.x2 + 1, y); }
 		if (r.top > 0) consider_door(r.top, r.y1 - 1);
@@ -221,16 +221,18 @@ struct chunk
 		else return 0;
 	}
 
-	inline void horizontal_corridor(int x1, int x2, int y)
+	inline room& horizontal_corridor(int x1, int x2, int y)
 	{
 		for (int i = x1; i <= x2; i++) { dig(i, y); }
 		rooms.emplace_back(x1, y, x2, y, 0, ROOM_FLAG_CORRIDOR, rooms.size());
+		return rooms.back();
 	}
 
-	inline void vertical_corridor(int x, int y1, int y2)
+	inline room& vertical_corridor(int x, int y1, int y2)
 	{
 		for (int i = y1; i <= y2; i++) { dig(x, i); }
 		rooms.emplace_back(x, y1, x, y2, 0, ROOM_FLAG_CORRIDOR, rooms.size());
+		return rooms.back();
 	}
 
 	int16_t width;

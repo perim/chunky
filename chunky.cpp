@@ -194,73 +194,189 @@ void chunk_room_grow_randomly(chunk& c, room& r, int min, int max)
 	}
 }
 
+// Dig tunnels from inner structure to exits
+static void maybe_dig_up_to_exit(chunk& c, room& r)
+{
+	if (c.top == -1) return;
+	if (c.top < r.x1 && c.top > r.x2)
+	{
+		room& rr = c.vertical_corridor(c.top, 1, r.y1 - 1);
+		rr.top = rr.bottom = r.top = c.top;
+		rr.self_test();
+	}
+	else
+	{
+		r.top = (c.top < r.x1) ? r.x1 : r.x2;
+		room& r1 = c.horizontal_corridor(std::min<int>(c.top, r.top), std::max<int>(c.top, r.top), 1);
+		r1.top = c.top;
+		r1.bottom = r.top;
+		r1.self_test();
+		if (r.y1 > 2)
+		{
+			room& r2 = c.vertical_corridor(r.top, 2, r.y1 - 1);
+			r2.top = r2.bottom = r.top;
+			r2.self_test();
+		}
+	}
+	c.self_test();
+}
+static void maybe_dig_down_to_exit(chunk& c, room& r)
+{
+	if (c.bottom == -1) return;
+	if (c.bottom < r.x1 && c.bottom > r.x2)
+	{
+		room& rr = c.vertical_corridor(c.bottom, r.y2 + 1, c.height - 2);
+		rr.bottom = rr.top = r.bottom = c.bottom;
+		rr.self_test();
+	}
+	else
+	{
+		r.bottom = (c.bottom < r.x1) ? r.x1 : r.x2;
+		room& r1 = c.horizontal_corridor(std::min<int>(c.bottom, r.bottom), std::max<int>(c.bottom, r.bottom), c.height - 2);
+		r1.bottom = c.bottom;
+		r1.top = r.bottom;
+		r1.self_test();
+		if (r.y2 < c.height - 3)
+		{
+			room& r2 = c.vertical_corridor(r.bottom, r.y2 + 1, c.height - 3);
+			r1.bottom = c.bottom;
+			r1.top = r.bottom;
+			r2.top = r2.bottom = r.bottom;
+			r2.self_test();
+		}
+	}
+	c.self_test();
+}
+static void maybe_dig_left_to_exit(chunk& c, room& r)
+{
+	if (c.left == -1) return;
+	if (c.left < r.y1 && c.left > r.y2)
+	{
+		room& rr = c.horizontal_corridor(1, r.x1 - 1, c.left);
+		rr.left = rr.right = r.left = c.left;
+		rr.self_test();
+	}
+	else
+	{
+		r.left = (c.left < r.y1) ? r.y1 : r.y2;
+		room& r1 = c.vertical_corridor(1, std::min<int>(c.left, r.left), std::max<int>(c.left, r.left));
+		r1.left = c.left;
+		r1.right = r.left;
+		r1.self_test();
+		if (r.x1 > 2)
+		{
+			room& r2 = c.horizontal_corridor(2, r.x1 - 1, r.left);
+			r2.left = r2.right = r.left;
+			r2.self_test();
+		}
+	}
+	c.self_test();
+}
+static void maybe_dig_right_to_exit(chunk& c, room& r)
+{
+	if (c.right == -1) return;
+	if (c.right < r.y1 && c.right > r.y2)
+	{
+		room& rr = c.horizontal_corridor(r.x2 + 1, c.width - 2, c.right);
+		rr.left = rr.right = r.right = c.right;
+		rr.self_test();
+	}
+	else
+	{
+		r.right = (c.right < r.y1) ? r.y1 : r.y2;
+		room& r1 = c.vertical_corridor(c.width - 2, std::min<int>(c.right, r.right), std::max<int>(c.right, r.right));
+		r1.left = r.right;
+		r1.right = c.right;
+		r1.self_test();
+		if (r.x2 < c.width - 3)
+		{
+			room& r2 = c.horizontal_corridor(r.x2 + 1, c.width - 3, r.right);
+			r2.left = r2.right = r.right;
+			r2.self_test();
+		}
+	}
+	c.self_test();
+}
+
 bool chunk_filter_connect_exits_inner_loop(chunk& c)
 {
-	CHUNK_ASSERT(c, c.rooms.size() == 0);
+	CHUNK_ASSERT(c, c.rooms.size() == 0); // must be first room
 	const int hmid = c.width / 2;
 	const int vmid = c.height / 2;
-	const int minval = 6;
-	const int mtop = (c.top != -1) ? c.top : hmid;
-	const int mbottom = (c.bottom != -1) ? c.bottom : hmid;
-	const int mleft = (c.left != -1) ? c.left : vmid;
-	const int mright = (c.right != -1) ? c.right : vmid;
-	const int w = std::max({minval, abs(mtop - hmid), abs(mbottom - hmid)}) + 1;
-	const int h = std::max({minval, abs(mleft - vmid), abs(mright - vmid)}) + 1;
-
-	// First check requirements, return false if not met.
-	if (c.width < minval * 2 || c.height < minval * 2 || (c.top < minval && c.top != -1) || (c.bottom < minval && c.bottom != -1) || (c.right < minval && c.right != -1)
-	    || (c.left < minval && c.left != -1) || c.top > c.width - minval || c.bottom > c.width - minval || c.right > c.height - minval || c.left > c.height - minval) return false;
-
+	int rx1 = hmid / 2;
+	int rx2 = c.width - hmid / 2;
+	int ry1 = vmid / 2;
+	int ry2 = c.height - vmid / 2;
+	// Randomly modify sizes a bit
+	if (hmid >= 16)
+	{
+		if (c.roll(0, 1) == 0) rx1 += c.roll(1, 2);
+		else rx1 -= c.roll(1, 2);
+		if (c.roll(0, 1) == 0) rx2 += c.roll(1, 2);
+		else rx2 -= c.roll(1, 2);
+		assert(rx2 > rx1);
+	}
+	if (vmid >= 16)
+	{
+		if (c.roll(0, 1) == 0) ry1 += c.roll(1, 2);
+		else ry1 -= c.roll(1, 2);
+		if (c.roll(0, 1) == 0) ry2 += c.roll(1, 2);
+		else ry2 -= c.roll(1, 2);
+		assert(ry2 > ry1);
+	}
 	// Dig inner loop
-	c.horizontal_corridor(hmid - w, hmid + w, vmid - h);
-	c.horizontal_corridor(hmid - w, hmid + w, vmid + h);
-	c.vertical_corridor(hmid - w, vmid - h, vmid + h);
-	c.vertical_corridor(hmid + w, vmid - h, vmid + h);
-
-	// Dig tunnels to inner loop from exits
-	if (c.top != -1) c.vertical_corridor(c.top, 1, vmid - h - 1); // top
-	if (c.bottom != -1) c.vertical_corridor(c.bottom, vmid + h + 1, c.height - 2); // bottom
-	if (c.left != -1) c.horizontal_corridor(1, hmid - w - 1, c.left); // left
-	if (c.right != -1) c.horizontal_corridor(hmid + w + 1, c.width - 2, c.right); // right
-
+	room& rt = c.horizontal_corridor(rx1, rx2, ry1);
+	room& rb = c.horizontal_corridor(rx1, rx2, ry2);
+	room& rl = c.vertical_corridor(rx1, ry1, ry2);
+	room& rr = c.vertical_corridor(rx2, ry1, ry2);
+	// Connect inner loop with exits
+	maybe_dig_up_to_exit(c, rt);
+	maybe_dig_down_to_exit(c, rb);
+	maybe_dig_left_to_exit(c, rl);
+	maybe_dig_right_to_exit(c, rr);
 	// TBD - sometimes place a collapse somewhere to make loop incomplete
-
 	return true;
 }
 
 bool chunk_filter_connect_exits_grand_central(chunk& c)
 {
-	CHUNK_ASSERT(c, c.rooms.size() == 0);
+	CHUNK_ASSERT(c, c.rooms.size() == 0); // must be first room
 	const int hmid = c.width / 2;
 	const int vmid = c.height / 2;
-	const int minval = 5;
-	const int mtop = (c.top != -1) ? c.top : hmid;
-	const int mbottom = (c.bottom != -1) ? c.bottom : hmid;
-	const int mleft = (c.left != -1) ? c.left : vmid;
-	const int mright = (c.right != -1) ? c.right : vmid;
-	const int w = std::max({minval, abs(mtop - hmid), abs(mbottom - hmid)}) + 1;
-	const int h = std::max({minval, abs(mleft - vmid), abs(mright - vmid)}) + 1;
-
-	// First check requirements, return false if not met.
-	if (c.width < minval * 2 || c.height < minval * 2 || (c.top < minval && c.top != -1) || (c.bottom < minval && c.bottom != -1) || (c.right < minval && c.right != -1)
-	    || (c.left < minval && c.left != -1) || c.top > c.width - minval || c.bottom > c.width - minval || c.right > c.height - minval || c.left > c.height - minval) return false;
-
+	int rx1 = hmid / 2;
+	int rx2 = c.width - hmid / 2;
+	int ry1 = vmid / 2;
+	int ry2 = c.height - vmid / 2;
+	// Randomly modify sizes a bit
+	if (hmid >= 16)
+	{
+		if (c.roll(0, 1) == 0) rx1 += c.roll(1, 2);
+		else rx1 -= c.roll(1, 2);
+		if (c.roll(0, 1) == 0) rx2 += c.roll(1, 2);
+		else rx2 -= c.roll(1, 2);
+		assert(rx2 > rx1);
+	}
+	if (vmid >= 16)
+	{
+		if (c.roll(0, 1) == 0) ry1 += c.roll(1, 2);
+		else ry1 -= c.roll(1, 2);
+		if (c.roll(0, 1) == 0) ry2 += c.roll(1, 2);
+		else ry2 -= c.roll(1, 2);
+		assert(ry2 > ry1);
+	}
 	// Dig inner room
-	room inner(hmid - w, vmid - h, hmid + w, vmid + h);
+	room inner(rx1, ry1, rx2, ry2);
 	c.dig_room(inner);
-
-	// Dig tunnels to center room from exits
-	if (c.top != -1 && inner.y1 > 1) { c.vertical_corridor(c.top, 1, vmid - h - 1); inner.top = c.top; } // top
-	if (c.bottom != -1 && inner.y2 < c.height - 2) { c.vertical_corridor(c.bottom, vmid + h + 1, c.height - 2); inner.bottom = c.bottom; } // bottom
-	if (c.left != -1 && inner.x1 > 1) { c.horizontal_corridor(1, hmid - w - 1, c.left); inner.left = c.left; } // left
-	if (c.right != -1 && inner.x2 < c.width - 2) { c.horizontal_corridor(hmid + w + 1, c.width - 2, c.right); inner.right = c.right; } // right
-
+	// Connect inner room with exits
+	maybe_dig_up_to_exit(c, inner);
+	maybe_dig_down_to_exit(c, inner);
+	maybe_dig_left_to_exit(c, inner);
+	maybe_dig_right_to_exit(c, inner);
 	// Add some variety to the center room
 	if (c.roll(0, 1)) chunk_room_in_room(c, inner, c.roll(1, 3));
 	else chunk_room_corners(c, inner, CHUNK_TOP_LEFT | CHUNK_TOP_RIGHT | CHUNK_BOTTOM_LEFT | CHUNK_BOTTOM_RIGHT, c.roll(9, 16));
-
+	// Done
 	c.add_room(inner);
-
 	return true;
 }
 
@@ -664,7 +780,7 @@ bool chunk_room_corners(chunk& c, room& rr, int corners, int min)
 			c.dig_room_inside_room(r2, DIR_RIGHT | DIR_DOWN);
 			retval = true;
 		}
-		else { r2.x2 = midx; r2.y2 = midy; retval = chunk_room_in_room(c, r2, 1); }
+		else { r2.x2 = midx; r2.y2 = midy; retval = chunk_room_in_room(c, r2, 1) || retval; }
 	}
 
 	if ((corners & CHUNK_TOP_RIGHT) && r.top > 0 && r.right >= 2 && r.top < c.width - 1)
@@ -678,7 +794,7 @@ bool chunk_room_corners(chunk& c, room& rr, int corners, int min)
 			c.dig_room_inside_room(r2, DIR_LEFT | DIR_DOWN);
 			retval = true;
 		}
-		else { r2.x1 = midx; r2.y2 = midy; retval = chunk_room_in_room(c, r2, 1); }
+		else { r2.x1 = midx; r2.y2 = midy; retval = chunk_room_in_room(c, r2, 1) || retval; }
 	}
 
 	if ((corners & CHUNK_BOTTOM_LEFT) && r.bottom >= 2 && r.left > 0 && r.left < c.height - 1)
@@ -692,7 +808,7 @@ bool chunk_room_corners(chunk& c, room& rr, int corners, int min)
 			c.dig_room_inside_room(r2, DIR_RIGHT | DIR_UP);
 			retval = true;
 		}
-		else { r2.x2 = midx; r2.y1 = midy; retval = chunk_room_in_room(c, r2, 1); }
+		else { r2.x2 = midx; r2.y1 = midy; retval = chunk_room_in_room(c, r2, 1) || retval; }
 	}
 
 	if ((corners & CHUNK_BOTTOM_RIGHT) && r.bottom > 0 && r.right > 0 && r.bottom < c.width - 1 && r.right < c.height - 1)
@@ -706,7 +822,7 @@ bool chunk_room_corners(chunk& c, room& rr, int corners, int min)
 			c.dig_room_inside_room(r2, DIR_LEFT | DIR_UP);
 			retval = true;
 		}
-		else { r2.x1 = midx; r2.y1 = midy; retval = chunk_room_in_room(c, r2, 1); }
+		else { r2.x1 = midx; r2.y1 = midy; retval = chunk_room_in_room(c, r2, 1) || retval; }
 	}
 
 	if (retval) rr.flags |= ROOM_FLAG_FURNISHED;
