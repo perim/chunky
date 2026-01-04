@@ -169,19 +169,39 @@ static void generate_room(chunk& c, int method)
 	y = r.y1;
 }
 
-static bool try_move(chunk& c, int x, int y)
+static bool can_open_one_way(uint8_t tile, int dx, int dy)
 {
-	if (x < 0 || y < 0 || x >= c.width || y >= c.height) return false;
-	uint8_t tile = c.at(x, y);
+	switch (tile)
+	{
+	case TILE_ONE_WAY_TOP: return dx == 0 && dy == -1;
+	case TILE_ONE_WAY_BOTTOM: return dx == 0 && dy == 1;
+	case TILE_ONE_WAY_LEFT: return dx == -1 && dy == 0;
+	case TILE_ONE_WAY_RIGHT: return dx == 1 && dy == 0;
+	default: return false;
+	}
+}
+
+static bool try_move(chunk& c, int from_x, int from_y, int to_x, int to_y)
+{
+	if (to_x < 0 || to_y < 0 || to_x >= c.width || to_y >= c.height) return false;
+	const int dx = to_x - from_x;
+	const int dy = to_y - from_y;
+	uint8_t tile = c.at(to_x, to_y);
 	if (tile == TILE_EMPTY) return true;
 	if (tile == TILE_DOOR_OPEN) return true;
 	if (tile == TILE_DOOR_CLOSED)
 	{
-		c.build(x, y, TILE_DOOR_OPEN);
-		restore(c, y, x);
+		c.build(to_x, to_y, TILE_DOOR_OPEN);
+		restore(c, to_y, to_x);
 		return false;
 	}
-	// TBD handle one-way doors here
+	if (tile == TILE_ONE_WAY_TOP || tile == TILE_ONE_WAY_BOTTOM || tile == TILE_ONE_WAY_LEFT || tile == TILE_ONE_WAY_RIGHT)
+	{
+		if (!can_open_one_way(tile, dx, dy)) return false;
+		c.build(to_x, to_y, TILE_DOOR_OPEN);
+		restore(c, to_y, to_x);
+		return true;
+	}
 	return false;
 }
 
@@ -217,25 +237,25 @@ int main()
 		mvaddch(y, x, me);
 		ch = getch();
 		if (ch == 'q' || ch == 'Q' || ch == 27) break;
-		else if (ch == KEY_LEFT && try_move(c, x - 1, y))
+		else if (ch == KEY_LEFT && try_move(c, x, y, x - 1, y))
 		{
 			restore(c, y, x);
 			x--;
 			place_me(c, y, x);
 		}
-		else if (ch == KEY_RIGHT && try_move(c, x + 1, y))
+		else if (ch == KEY_RIGHT && try_move(c, x, y, x + 1, y))
 		{
 			restore(c, y, x);
 			x++;
 			place_me(c, y, x);
 		}
-		else if (ch == KEY_UP && y > 0 && try_move(c, x, y - 1))
+		else if (ch == KEY_UP && y > 0 && try_move(c, x, y, x, y - 1))
 		{
 			restore(c, y, x);
 			y--;
 			place_me(c, y, x);
 		}
-		else if (ch == KEY_DOWN && try_move(c, x, y + 1))
+		else if (ch == KEY_DOWN && try_move(c, x, y, x, y + 1))
 		{
 			restore(c, y, x);
 			y++;
