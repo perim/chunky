@@ -16,10 +16,10 @@ void chunk::room_list_self_test() const
 		const room& r1 = rooms.at(i);
 		ROOM_ASSERT(*this, r1, r1.x2 >= r1.x1 && r1.x1 > 0 && r1.x2 < width - 1);
 		ROOM_ASSERT(*this, r1, r1.y2 >= r1.y1 && r1.y1 > 0 && r1.y2 < height - 1);
-		ROOM_ASSERT(*this, r1, r1.top == -1 || at(r1.top, r1.y1 - 1) == TILE_DOOR || at(r1.top, r1.y1 - 1) == TILE_EMPTY);
-		ROOM_ASSERT(*this, r1, r1.bottom == -1 || at(r1.bottom, r1.y2 + 1) == TILE_DOOR || at(r1.bottom, r1.y2 + 1) == TILE_EMPTY);
-		ROOM_ASSERT(*this, r1, r1.left == -1 || at(r1.x1 - 1, r1.left) == TILE_DOOR || at(r1.x1 - 1, r1.left) == TILE_EMPTY);
-		ROOM_ASSERT(*this, r1, r1.right == -1 || at(r1.x2 + 1, r1.right) == TILE_DOOR || at(r1.x2 + 1, r1.right) == TILE_EMPTY);
+		ROOM_ASSERT(*this, r1, r1.top == -1 || at(r1.top, r1.y1 - 1) == TILE_DOOR_CLOSED || at(r1.top, r1.y1 - 1) == TILE_EMPTY);
+		ROOM_ASSERT(*this, r1, r1.bottom == -1 || at(r1.bottom, r1.y2 + 1) == TILE_DOOR_CLOSED || at(r1.bottom, r1.y2 + 1) == TILE_EMPTY);
+		ROOM_ASSERT(*this, r1, r1.left == -1 || at(r1.x1 - 1, r1.left) == TILE_DOOR_CLOSED || at(r1.x1 - 1, r1.left) == TILE_EMPTY);
+		ROOM_ASSERT(*this, r1, r1.right == -1 || at(r1.x2 + 1, r1.right) == TILE_DOOR_CLOSED || at(r1.x2 + 1, r1.right) == TILE_EMPTY);
 		ROOM_ASSERT(*this, r1, r1.index != -1);
 		for (unsigned j = i + 1; j < rooms.size(); j++)
 		{
@@ -468,7 +468,8 @@ static inline void print_tile(uint8_t t)
 	{
 	case TILE_ROCK: printf(" "); break;
 	case TILE_WALL: printf("#"); break;
-	case TILE_DOOR: printf(DCYAN"+"); break;
+	case TILE_DOOR_CLOSED: printf(DCYAN"+"); break;
+	case TILE_DOOR_OPEN: printf(DCYAN"'"); break;
 	case TILE_ONE_WAY_TOP: printf(DCYAN"^"); break;
 	case TILE_ONE_WAY_BOTTOM: printf(DCYAN"_"); break;
 	case TILE_ONE_WAY_RIGHT: printf(DCYAN"]"); break;
@@ -642,7 +643,7 @@ void chunk_filter_room_expand(chunk& c, int min, int max)
 			r.left = ndir;
 			if (r.flags & ROOM_FLAG_NEAT) { rl.y1 = r.y1; rl.y2 = r.y2; r.flags |= ROOM_FLAG_NEAT; }
 			c.dig(r.x1 - 1, r.left); // dig a corridor
-			if (c.roll(0, c.config.openness * 3) == 0) c.build(r.x1 - 1, r.left, TILE_DOOR);
+			if (c.roll(0, c.config.openness * 3) == 0) c.build(r.x1 - 1, r.left, TILE_DOOR_CLOSED);
 			c.dig_room(rl); // dig the room
 			rl.right = r.left;
 			chunk_room_grow_randomly(c, rl, min, max);
@@ -657,7 +658,7 @@ void chunk_filter_room_expand(chunk& c, int min, int max)
 			r.right = ndir;
 			if (r.flags & ROOM_FLAG_NEAT) { rr.y1 = r.y1; rr.y2 = r.y2; r.flags |= ROOM_FLAG_NEAT; }
 			c.dig(r.x2 + 1, r.right); // dig a corridor
-			if (c.roll(0, c.config.openness * 3) == 0) c.build(r.x2 + 1, r.right, TILE_DOOR);
+			if (c.roll(0, c.config.openness * 3) == 0) c.build(r.x2 + 1, r.right, TILE_DOOR_CLOSED);
 			c.dig_room(rr); // dig the room
 			rr.left = r.right;
 			chunk_room_grow_randomly(c, rr, min, max);
@@ -672,7 +673,7 @@ void chunk_filter_room_expand(chunk& c, int min, int max)
 			r.top = ndir;
 			if (r.flags & ROOM_FLAG_NEAT) { rt.x1 = r.x1; rt.x2 = r.x2; r.flags |= ROOM_FLAG_NEAT; }
 			c.dig(r.top, r.y1 - 1); // dig a corridor
-			if (c.roll(0, c.config.openness * 3) == 0) c.build(r.top, r.y1 - 1, TILE_DOOR);
+			if (c.roll(0, c.config.openness * 3) == 0) c.build(r.top, r.y1 - 1, TILE_DOOR_CLOSED);
 			c.dig_room(rt); // dig the room
 			rt.bottom = r.top;
 			chunk_room_grow_randomly(c, rt, min, max);
@@ -687,7 +688,7 @@ void chunk_filter_room_expand(chunk& c, int min, int max)
 			r.bottom = ndir;
 			if (r.flags & ROOM_FLAG_NEAT) { rb.x1 = r.x1; rb.x2 = r.x2; r.flags |= ROOM_FLAG_NEAT; }
 			c.dig(r.bottom, r.y2 + 1); // dig a corridor
-			if (c.roll(0, c.config.openness * 3) == 0) c.build(r.bottom, r.y2 + 1, TILE_DOOR);
+			if (c.roll(0, c.config.openness * 3) == 0) c.build(r.bottom, r.y2 + 1, TILE_DOOR_CLOSED);
 			c.dig_room(rb); // dig the room
 			rb.top = r.bottom;
 			chunk_room_grow_randomly(c, rb, min, max);

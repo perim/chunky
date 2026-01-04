@@ -57,7 +57,8 @@ enum tile_type
 {
 	TILE_ROCK,
 	TILE_EMPTY,
-	TILE_DOOR,
+	TILE_DOOR_OPEN,
+	TILE_DOOR_CLOSED,
 	TILE_ONE_WAY_TOP,
 	TILE_ONE_WAY_BOTTOM,
 	TILE_ONE_WAY_LEFT,
@@ -149,7 +150,7 @@ struct chunk
 {
 	chunk(const chunkconfig& c);
 
-	inline void consider_door(int x, int y) { if (config.state.roll(0, config.openness * 2) == 0) build(x, y, TILE_DOOR); else build(x, y, TILE_EMPTY); }
+	inline void consider_door(int x, int y) { if (config.state.roll(0, config.openness * 2) == 0) build(x, y, TILE_DOOR_CLOSED); else build(x, y, TILE_EMPTY); }
 	inline void make_exit_top(int v) { top = v; dig(v, 0); consider_door(v, 0); }
 	inline void make_exit_left(int v) { left = v; dig(0, v); consider_door(0, v); }
 	inline void make_exit_bottom(int v) { bottom = v; dig(v, config.height - 1); consider_door(v, config.height - 1); }

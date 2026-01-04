@@ -31,7 +31,7 @@ static void usage()
 	printf("-lh/--level-height H   Height of level in number of chunks (default %d)\n", level_height);
 	printf("-x/--level-x-pos X     Level X position of chunk (default %d)\n", xpos);
 	printf("-y/--level-y-pos Y     Level Y position of chunks (default %d)\n", ypos);
-	printf("-m/--method M          Initial layout [main (default), inner, grand]\n", ypos);
+	printf("-m/--method M          Initial layout [main (default), inner, grand]\n");
 	exit(-1);
 }
 

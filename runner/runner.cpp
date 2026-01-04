@@ -9,7 +9,7 @@
 
 static char me = '@';
 static int width = 64;
-static int height = 16;
+static int height = 32;
 static int level_width = 4;
 static int level_height = 4;
 static int chunk_xpos = 1;
@@ -39,7 +39,8 @@ static chtype tile_glyph(uint8_t t)
 	{
 	case TILE_ROCK: return ' ';
 	case TILE_WALL: return '#';
-	case TILE_DOOR: return '+';
+	case TILE_DOOR_CLOSED: return '+';
+	case TILE_DOOR_OPEN: return '\'';
 	case TILE_ONE_WAY_TOP: return '^';
 	case TILE_ONE_WAY_BOTTOM: return 'v';
 	case TILE_ONE_WAY_RIGHT: return '>';
@@ -72,7 +73,8 @@ static short tile_color_pair(uint8_t t)
 {
 	switch (t)
 	{
-	case TILE_DOOR:
+	case TILE_DOOR_CLOSED:
+	case TILE_DOOR_OPEN:
 	case TILE_ONE_WAY_TOP:
 	case TILE_ONE_WAY_BOTTOM:
 	case TILE_ONE_WAY_RIGHT:
@@ -117,7 +119,7 @@ static void render_room(const chunk& c)
 	refresh();
 }
 
-static void erase_me(const chunk& c, int y, int x)
+static void restore(const chunk& c, int y, int x)
 {
 	const uint8_t t = c.at(x, y);
 	chtype attrs = 0;
@@ -161,12 +163,10 @@ static void generate_room(chunk& c, int method)
 	c.self_test();
 	chunk_filter_one_way_doors(c, s.roll(0, 4));
 	c.beautify();
-	// Start inside a room. Use "boss room" algorithm for now.
-	room r = chunk_filter_boss_placement(c, 0);
-	x = r.x1 + 1;
-	y = r.y1 + 1;
-	//chunk_filter_protect_room(c, r);
-	//chunk_filter_wildlife(c);
+	// Start inside the first room. Pretty random.
+	room r = c.rooms.at(0);
+	x = r.x1;
+	y = r.y1;
 }
 
 static bool try_move(chunk& c, int x, int y)
@@ -174,7 +174,13 @@ static bool try_move(chunk& c, int x, int y)
 	if (x < 0 || y < 0 || x >= c.width || y >= c.height) return false;
 	uint8_t tile = c.at(x, y);
 	if (tile == TILE_EMPTY) return true;
-	if (tile == TILE_DOOR) return true; // TBD add door opening here
+	if (tile == TILE_DOOR_OPEN) return true;
+	if (tile == TILE_DOOR_CLOSED)
+	{
+		c.build(x, y, TILE_DOOR_OPEN);
+		restore(c, y, x);
+		return false;
+	}
 	// TBD handle one-way doors here
 	return false;
 }
@@ -213,25 +219,25 @@ int main()
 		if (ch == 'q' || ch == 'Q' || ch == 27) break;
 		else if (ch == KEY_LEFT && try_move(c, x - 1, y))
 		{
-			erase_me(c, y, x);
+			restore(c, y, x);
 			x--;
 			place_me(c, y, x);
 		}
 		else if (ch == KEY_RIGHT && try_move(c, x + 1, y))
 		{
-			erase_me(c, y, x);
+			restore(c, y, x);
 			x++;
 			place_me(c, y, x);
 		}
 		else if (ch == KEY_UP && y > 0 && try_move(c, x, y - 1))
 		{
-			erase_me(c, y, x);
+			restore(c, y, x);
 			y--;
 			place_me(c, y, x);
 		}
 		else if (ch == KEY_DOWN && try_move(c, x, y + 1))
 		{
-			erase_me(c, y, x);
+			restore(c, y, x);
 			y++;
 			place_me(c, y, x);
 		}
