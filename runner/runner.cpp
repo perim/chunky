@@ -169,6 +169,39 @@ static void generate_room(chunk& c, int method)
 	y = r.y1;
 }
 
+static void load_chunk(chunk& c, chunkconfig& config, int new_chunk_x, int new_chunk_y, int new_x, int new_y)
+{
+	config.x = new_chunk_x;
+	config.y = new_chunk_y;
+	c = chunk(config);
+	generate_room(c, 0);
+	clear();
+	render_room(c);
+	x = new_x;
+	y = new_y;
+	place_me(c, y, x);
+}
+
+static bool try_switch_chunk(chunk& c, chunkconfig& config, int dx, int dy)
+{
+	const int new_chunk_x = config.x + dx;
+	const int new_chunk_y = config.y + dy;
+	if (new_chunk_x < 0 || new_chunk_y < 0 || new_chunk_x >= config.level_width || new_chunk_y >= config.level_height)
+	{
+		return false;
+	}
+
+	int new_x = x;
+	int new_y = y;
+	if (dx < 0) new_x = c.width - 1;
+	else if (dx > 0) new_x = 0;
+	if (dy < 0) new_y = c.height - 1;
+	else if (dy > 0) new_y = 0;
+
+	load_chunk(c, config, new_chunk_x, new_chunk_y, new_x, new_y);
+	return true;
+}
+
 static bool can_open_one_way(uint8_t tile, int dx, int dy)
 {
 	switch (tile)
@@ -237,11 +270,19 @@ int main()
 		mvaddch(y, x, me);
 		ch = getch();
 		if (ch == 'q' || ch == 'Q' || ch == 27) break;
+		else if (ch == KEY_LEFT && x == 0)
+		{
+			try_switch_chunk(c, config, -1, 0);
+		}
 		else if (ch == KEY_LEFT && try_move(c, x, y, x - 1, y))
 		{
 			restore(c, y, x);
 			x--;
 			place_me(c, y, x);
+		}
+		else if (ch == KEY_RIGHT && x == c.width - 1)
+		{
+			try_switch_chunk(c, config, 1, 0);
 		}
 		else if (ch == KEY_RIGHT && try_move(c, x, y, x + 1, y))
 		{
@@ -249,11 +290,19 @@ int main()
 			x++;
 			place_me(c, y, x);
 		}
+		else if (ch == KEY_UP && y == 0)
+		{
+			try_switch_chunk(c, config, 0, -1);
+		}
 		else if (ch == KEY_UP && y > 0 && try_move(c, x, y, x, y - 1))
 		{
 			restore(c, y, x);
 			y--;
 			place_me(c, y, x);
+		}
+		else if (ch == KEY_DOWN && y == c.height - 1)
+		{
+			try_switch_chunk(c, config, 0, 1);
 		}
 		else if (ch == KEY_DOWN && try_move(c, x, y, x, y + 1))
 		{
