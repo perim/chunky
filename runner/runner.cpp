@@ -53,6 +53,7 @@ static chtype tile_glyph(uint8_t t)
 	case TILE_TURRET: return 'U';
 	case TILE_TOTEM: return 'I';
 	case TILE_TRAP: return '~';
+	case TILE_CHEST: return '&';
 	case TILE_ALTAR: return 'A';
 	case TILE_SHRINE: return 'R';
 	case TILE_HIDDEN_GROVE: return 'G';
@@ -95,6 +96,8 @@ static short tile_color_pair(uint8_t t)
 	case ENTITY_SPECIALIST:
 	case ENTITY_WILD:
 		return 3;
+	case TILE_CHEST:
+		return 1;
 	default:
 		return 0;
 	}
@@ -161,7 +164,8 @@ static void generate_room(chunk& c, int method)
 	c.self_test();
 	chunk_filter_room_in_room(c);
 	c.self_test();
-	chunk_filter_one_way_doors(c, s.roll(0, 4));
+	chunk_filter_one_way_doors(c, s.roll(0, 2));
+	chunk_filter_chest(c);
 	c.beautify();
 	// Start inside the first room. Pretty random.
 	room r = c.rooms.at(0);

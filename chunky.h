@@ -75,6 +75,7 @@ enum tile_type
 	TILE_SHRINE,
 	TILE_HIDDEN_GROVE,
 	TILE_SHRUB,
+	TILE_CHEST,
 
 	ENTITY_BOSS,
 	ENTITY_LEADER,
@@ -320,3 +321,6 @@ bool chunk_filter_protect_room(chunk& c, room& r);
 
 /// Put random wild mobs in every empty room.
 bool chunk_filter_wildlife(chunk& c);
+
+/// A filter to add a single chest in the most isolated room in the chunk.
+bool chunk_filter_chest(chunk& c);

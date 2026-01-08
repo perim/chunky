@@ -482,6 +482,7 @@ static inline void print_tile(uint8_t t)
 	case TILE_TURRET: printf(LRED"¤"); break;
 	case TILE_TOTEM: printf(LRED"I"); break;
 	case TILE_TRAP: printf(LRED"~"); break;
+	case TILE_CHEST: printf(LYELLOW"&"); break;
 	case TILE_ALTAR: printf(LBLUE"A"); break;
 	case TILE_SHRINE: printf(LBLUE"S"); break;
 	case TILE_HIDDEN_GROVE: printf(LBLUE"G"); break;
@@ -954,5 +955,27 @@ bool chunk_filter_wildlife(chunk& c)
 	{
 		populate_room(c, r, s.quadratic_weighted_roll(3) + 1, ENTITY_WILD, s);
 	}
+	return true;
+}
+
+bool chunk_filter_chest(chunk& c)
+{
+	room* rr = nullptr;
+	for (room& r : c.rooms)
+	{
+		if (r.flags & ROOM_FLAG_CORRIDOR) continue;
+		if (r.flags & ROOM_FLAG_FURNISHED) continue;
+		if (r.door_count() != 1) continue;
+		if (!rr || r.isolation > rr->isolation || (r.isolation == rr->isolation && r.size() > rr->size())) rr = &r;
+	}
+
+	if (!rr) return false;
+
+	seed s = c.config.state;
+	int x;
+	int y;
+	if (!find_location(c, *rr, x, y, s)) return false;
+	if (!c.try_entity(*rr, x, y, TILE_CHEST)) return false;
+	rr->flags |= ROOM_FLAG_FURNISHED;
 	return true;
 }

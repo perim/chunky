@@ -95,6 +95,7 @@ static void stress_test(chunkconfig& config, int method)
 	room r = chunk_filter_boss_placement(c, 0);
 	chunk_filter_protect_room(c, r);
 	chunk_filter_wildlife(c);
+	chunk_filter_chest(c);
 	print_room(c, r.index);
 }
 
