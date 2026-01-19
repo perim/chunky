@@ -218,6 +218,50 @@ int main()
 			y++;
 			place_me(c, y, x);
 		}
+		else if (ch == KEY_SLEFT)
+		{
+			while (try_move(c, x, y, x - 1, y))
+			{
+				restore(c, y, x);
+				x--;
+				place_me(c, y, x);
+				napms(50);
+				refresh();
+			}
+		}
+		else if (ch == KEY_SRIGHT)
+		{
+			while (try_move(c, x, y, x + 1, y))
+			{
+				restore(c, y, x);
+				x++;
+				place_me(c, y, x);
+				napms(50);
+				refresh();
+			}
+		}
+		else if (ch == KEY_SR)
+		{
+			while (try_move(c, x, y, x, y - 1))
+			{
+				restore(c, y, x);
+				y--;
+				place_me(c, y, x);
+				napms(50);
+				refresh();
+			}
+		}
+		else if (ch == KEY_SF)
+		{
+			while (try_move(c, x, y, x, y + 1))
+			{
+				restore(c, y, x);
+				y++;
+				place_me(c, y, x);
+				napms(50);
+				refresh();
+			}
+		}
 	}
 	endwin();
 	return 0;

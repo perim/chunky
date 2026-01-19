@@ -116,6 +116,55 @@ int main()
 			y = new_y;
 		}
 
+		if (ch == KEY_SLEFT)
+		{
+			while (try_move(v, x, y, x - 1, y))
+			{
+				x--;
+				v.change_position(x, y);
+				render_view(v, x, y);
+				mvaddch(v.view_height() / 2, v.view_width() / 2, me);
+				refresh();
+				napms(50);
+			}
+		}
+		else if (ch == KEY_SRIGHT)
+		{
+			while (try_move(v, x, y, x + 1, y))
+			{
+				x++;
+				v.change_position(x, y);
+				render_view(v, x, y);
+				mvaddch(v.view_height() / 2, v.view_width() / 2, me);
+				refresh();
+				napms(50);
+			}
+		}
+		else if (ch == KEY_SR)
+		{
+			while (try_move(v, x, y, x, y - 1))
+			{
+				y--;
+				v.change_position(x, y);
+				render_view(v, x, y);
+				mvaddch(v.view_height() / 2, v.view_width() / 2, me);
+				refresh();
+				napms(50);
+			}
+		}
+		else if (ch == KEY_SF)
+		{
+			while (try_move(v, x, y, x, y + 1))
+			{
+				y++;
+				v.change_position(x, y);
+				render_view(v, x, y);
+				mvaddch(v.view_height() / 2, v.view_width() / 2, me);
+				refresh();
+				napms(50);
+			}
+		}
+
 		v.change_position(x, y);
 		render_view(v, x, y);
 	}
