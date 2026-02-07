@@ -97,8 +97,8 @@ struct entity
 struct chunkconfig
 {
 	chunkconfig(seed s) : state(s), orig(s) {}
-	int width = 32;
-	int height = 32;
+	int width = 32; // chunk width, must be power of two
+	int height = 32; // chunk height, must be power of two
 	/// The lower this value, the more likely to have doors and other obstacles.
 	int openness = 2;
 	/// The higher this value, the more chaotic the design.
@@ -108,10 +108,10 @@ struct chunkconfig
 	seed state;
 	seed orig;
 
-	// Our place in the world
-	int x = 0;
+	// Our place in the world (ie level)
+	int x = 0; // our location in the level in chunks units
 	int y = 0;
-	int level_width = 32;
+	int level_width = 32; // width of chunk world in chunks
 	int level_height = 32;
 };
 

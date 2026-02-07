@@ -25,11 +25,17 @@
 - Prefer deterministic seeds for generation-related tests to avoid flaky output.
 - Each class has a `self_test` method that can be invoked to verify its internal consistency.
 
-## Commit & Pull Request Guidelines
-- Commit messages are short, imperative, and scoped (e.g., "Fix crash in room split").
-- PRs should include a concise description, the tests run, and any linked issues.
-- For generation changes, include a small before/after snippet or output note.
-
 ## Configuration Tips
 - If adding new options, update `chunkgen.cpp` and add tests for them.
 - Extra functionality is usually added as standalone `filter` functions.
+
+## Coordinate systems
+- The smallest unit is a tile, which in our tests and runners are displayed as a single character.
+- A `chunk` is the smallest collection of tiles. We define them in `chunky.h`.
+- A `level` is the total collection of all chunks defined relative to each other.
+- A `view` is a movable window into the level and contains a matrix of chunks.
+- Chunk coordinates are relative to a single chunk and must never be larger than the chunk size.
+- World coordinates are tile units relative to the size of the whole level. Maximum value is
+  chunk size multiplied by number of chunks in each direction.
+- View coordinates are local to the defined view, typically relative to what a user would see
+  on screen.

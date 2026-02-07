@@ -1,3 +1,5 @@
+// Chunkview - helper window into a chunk matrix
+
 #pragma once
 
 #include "chunky.h"
@@ -5,12 +7,6 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-
-// Coordinate systems:
-// * World coordinates are relative to the space of possible chunks defined by
-//   chunkconfig when chunkview is created.
-// * View coordinates are local to the view defined when chunkview is created,
-//   typically what the user would see on screen.
 
 struct coords
 {
@@ -41,11 +37,6 @@ struct chunkview
 	/// new chunks if necessary.
 	void change_position(int x, int y);
 
-	/// Get a row of data from the view. The row is in view coordinates. The returned
-	/// string is the length of the defined view. `row` must not be larged than the
-	/// size of the defined view.
-	std::string_view line(int row) const;
-
 	/// Get the total row count
 	int view_width() const { return _width; };
 
@@ -64,9 +55,6 @@ private:
 
 	/// Chunk data
 	std::unordered_map<coords, chunk> chunks;
-
-	/// The view data, copied from each chunk.
-	std::string data;
 
 	int _width = -1;
 	int _height = -1;
