@@ -67,8 +67,8 @@ int main()
 	uint64_t value = time(nullptr);
 	seed s(value, value);
 	chunkconfig config(s);
-	config.level_width = 4;
-	config.level_height = 4;
+	config.level_width = 8;
+	config.level_height = 8;
 	config.chaos = s.roll(0, 4);
 	config.openness = s.roll(0, 4);
 

@@ -62,6 +62,10 @@ private:
 	int _current_y = -1;
 	int _chunk_width = -1;
 	int _chunk_height = -1;
+	int _chunk_x_start = 0;
+	int _chunk_x_end = -1;
+	int _chunk_y_start = 0;
+	int _chunk_y_end = -1;
 
 	chunkconfig _config;
 };
