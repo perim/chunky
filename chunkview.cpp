@@ -82,6 +82,8 @@ void chunkview::change_position(int x, int y)
 				new_chunk.generate_exits();
 				chunk_filter_connect_exits(new_chunk);
 				chunk_filter_room_expand(new_chunk);
+				chunk_filter_one_way_doors(new_chunk, new_chunk.roll(0, 2));
+				chunk_filter_chest(new_chunk);
 				chunks.emplace(chunk_coords, std::move(new_chunk));
 			}
 		}
