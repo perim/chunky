@@ -32,7 +32,7 @@ void chunk::room_list_self_test() const
 
 void chunk::self_test() const
 {
-	CHUNK_ASSERT(*this, ispow2(height) && ispow2(height));
+	CHUNK_ASSERT(*this, ispow2(width) && ispow2(height));
 	CHUNK_ASSERT(*this, rock(0, 0) && rock(width - 1, 0));
 	CHUNK_ASSERT(*this, rock(0, height - 1) && rock(width - 1, height - 1));
 	room_list_self_test();
