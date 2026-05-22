@@ -1,5 +1,4 @@
-Chunky Dungeon Digger Library
-=============================
+# Chunky Dungeon Digger Library
 
 This is a quick and dirty library for digging mines and man-made
 underground tunnels for use in games such as roguelikes. The
@@ -68,23 +67,28 @@ upon this map chunk.
 It contains a list of all the rooms with some basic data like
 location, size and where the exits are.
 
-Runner
-------
+## Chunkview
+
+The `chunkview` class is a cache for several chunks that allows you
+to have a seamless transition between chunks and display neighbouring
+chunks. It also stores some state like opened doors (if a chunk leaves
+the chunkview such states reset).
+
+## Runner
 
 There is a very simple ncurses-based rogue-like in the `runner` directory
-called (you guessed it) *runner*. It basically just allows you to run
-around in chunky-generated maps to look at them. Press arrow keys to move
-and 'esc' or 'q' to exit.
+called simply `runner`. It basically just allows you to run around in
+chunky-generated maps to look at them. Press arrow keys to move and
+'esc' or 'q' to exit. There is also a `viewrunner` that uses the
+`chunkview` class.
 
-Building
-========
+## Building
 
 For Ubuntu x86/x64, install these packages:
 
 	sudo apt-get install git cmake pkg-config libncurses-dev
 
-To build for linux desktop:
---------------------------
+### To build for linux desktop:
 
 ```
 git submodule update --init --recursive
@@ -109,7 +113,7 @@ and then run
 as many times as you want and gawk at the pretty maps it spits out! Or just run
 
 ```
-./runner
+./viewrunner
 ```
 
 to pretend to play a rogue-like with our chunky maps.
