@@ -633,7 +633,7 @@ void chunk_filter_room_expand(chunk& c, int min, int max)
 {
 	for (int idx = 0; idx < (int)c.rooms.size(); idx++)
 	{
-		const room rc = c.rooms.at(idx);
+		const room& rc = c.rooms.at(idx);
 		rc.self_test();
 		// check each direction: do we have space to add a room expansion in that direction?
 		int ndir = c.roll(rc.y1, rc.y2);
