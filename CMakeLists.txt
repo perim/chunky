@@ -1,8 +1,9 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.22)
 PROJECT(chunky VERSION 0.1)
 
 set(CHUNKY_LIBS stdc++ m)
 set(CHUNKY_SRC external/libdicey/dice.cpp chunky.cpp chunky.h)
+set(CMAKE_CTEST_ARGUMENTS "--output-on-failure")
 enable_testing()
 
 ADD_EXECUTABLE(basic_test tests/basic_test.cpp ${CHUNKY_SRC})
