@@ -11,7 +11,6 @@
 #include <string>
 
 static int p__debug_level = 0;
-static int p__gen_method = 0;
 static int width = 64;
 static int height = 16;
 static int level_width = 4;

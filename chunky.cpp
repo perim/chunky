@@ -1,7 +1,4 @@
-
 #include "chunky.h"
-
-static bool debug = false;
 
 chunk::chunk(const chunkconfig& c) : width(c.width), height(c.height), config(c), map(c.width * c.height)
 {
@@ -649,7 +646,6 @@ void chunk_filter_room_expand(chunk& c, int min, int max)
 			rl.right = r.left;
 			chunk_room_grow_randomly(c, rl, min, max);
 			c.add_room(rl);
-			if (debug) print_room(c, rl);
 		}
 		ndir = c.roll(rc.y1, rc.y2);
 		room rr(rc.x2 + 2, ndir - 1, rc.x2 + 4, ndir + 1, rc.isolation + 1);
@@ -664,7 +660,6 @@ void chunk_filter_room_expand(chunk& c, int min, int max)
 			rr.left = r.right;
 			chunk_room_grow_randomly(c, rr, min, max);
 			c.add_room(rr);
-			if (debug) print_room(c, rr);
 		}
 		ndir = c.roll(rc.x1, rc.x2);
 		room rt(ndir - 1, rc.y1 - 4, ndir + 1, rc.y1 - 2, rc.isolation + 1);
@@ -679,7 +674,6 @@ void chunk_filter_room_expand(chunk& c, int min, int max)
 			rt.bottom = r.top;
 			chunk_room_grow_randomly(c, rt, min, max);
 			c.add_room(rt);
-			if (debug) print_room(c, rt);
 		}
 		ndir = c.roll(rc.x1, rc.x2);
 		room rb(ndir - 1, rc.y2 + 2, ndir + 1, rc.y2 + 4, rc.isolation + 1);
@@ -694,7 +688,6 @@ void chunk_filter_room_expand(chunk& c, int min, int max)
 			rb.top = r.bottom;
 			chunk_room_grow_randomly(c, rb, min, max);
 			c.add_room(rb);
-			if (debug) print_room(c, rb);
 		}
 	}
 }
